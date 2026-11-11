@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingeniería en Energía - Juego Educativo Offline | Universidad de Guayaquil</title>
+<style>
+:root {
+  --blue: #003366;
+  --blue-light: #0055aa;
+  --green: #00a651;
+  --green-light: #00cc66;
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: #334155;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+header {
+  background: linear-gradient(135deg, var(--blue), var(--green));
+  padding: 1.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+header p { opacity: 0.9; font-size: 0.95rem; }
+.container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+.progress-section {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+}
+.progress-bar {
+  height: 28px;
+  background: #334155;
+  border-radius: 14px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--green-light));
+  width: 0%;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: white;
+}
+.semester-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+  justify-content: center;
+}
+.sem-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sem-btn.active, .sem-btn:hover {
+  background: var(--blue-light);
+  border-color: var(--green);
+}
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.subject-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.subject-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,166,81,0.15); }
+.subject-card.passed { border-color: var(--green); background: rgba(0,166,81,0.1); }
+.subject-card .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.subject-card h3 { font-size: 1.05rem; margin-bottom: 0.25rem; }
+.subject-card .meta { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+.btn {
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.btn:hover { background: var(--green-light); }
+.btn:disabled { background: #475569; cursor: not-allowed; }
+.grade { 
+  position: absolute; top: 10px; right: 10px; 
+  background: var(--green); color: white; 
+  padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.8rem; font-weight: bold;
+}
+.modal {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 1000;
+  align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal.show { display: flex; }
+.modal-content {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+}
+.modal-content h2 { margin-bottom: 1rem; color: var(--green-light); }
+.question { margin-bottom: 1.5rem; }
+.question p { margin-bottom: 0.75rem; font-weight: 500; }
+.options label {
+  display: block;
+  background: #334155;
+  padding: 0.75rem 1rem;
+  margin: 0.4rem 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.options label:hover { background: #475569; }
+.options input { margin-right: 0.5rem; }
+.modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end; }
+.name-input { 
+  width: 100%; padding: 0.75rem; border-radius: 8px; 
+  border: 1px solid var(--border); background: #0f172a; color: white; margin-bottom: 1rem;
+}
+.graduation {
+  text-align: center;
+}
+.graduation h2 { font-size: 2.5rem; color: var(--green-light); margin: 1rem 0; }
+footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; }
+@media (max-width: 600px) {
+  .subjects-grid { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ Ingeniería en Energía</h1>
+  <p>Universidad de Guayaquil • Juego Educativo Offline • 9 Semestres</p>
+</header>
+
+<div class="container">
+  <div class="progress-section">
+    <div id="student-info" style="margin-bottom: 0.75rem; font-weight: 600;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span>Progreso de Carrera</span>
+      <span id="credits-text">0 / 155 créditos</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill">0%</div>
+    </div>
+    <div id="semester-info" style="text-align: center; margin-top: 0.5rem; color: var(--text-muted);"></div>
+  </div>
+
+  <div class="semester-nav" id="semester-nav"></div>
+  <div class="subjects-grid" id="subjects-grid"></div>
+</div>
+
+<footer>
+  Basado en el pensum de Ingeniería en Energía - Universidad de Guayaquil<br>
+  Juego 100% offline • Progreso guardado en tu navegador (localStorage)
+</footer>
+
+<!-- Name Modal -->
+<div class="modal" id="name-modal">
+  <div class="modal-content">
+    <h2>Bienvenido estudiante</h2>
+    <p>Ingresa tu nombre para comenzar tu carrera en Ingeniería en Energía.</p>
+    <input type="text" id="student-name" class="name-input" placeholder="Tu nombre" maxlength="40">
+    <div class="modal-actions">
+      <button class="btn" onclick="startGame()">Comenzar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quiz Modal -->
+<div class="modal" id="quiz-modal">
+  <div class="modal-content">
+    <h2 id="quiz-title">Estudiar Materia</h2>
+    <div id="quiz-content"></div>
+    <div class="modal-actions">
+      <button class="btn" id="submit-quiz" onclick="submitQuiz()">Entregar Examen</button>
+      <button class="btn" style="background:#475569;" onclick="closeQuiz()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Graduation Modal -->
+<div class="modal" id="grad-modal">
+  <div class="modal-content graduation">
+    <div style="font-size: 4rem;">🎓</div>
+    <h2>¡Felicidades Ingeniero!</h2>
+    <p id="grad-message">Has aprobado todas las materias y completado los créditos de la carrera de Ingeniería en Energía.</p>
+    <p style="margin: 1rem 0; color: var(--green-light);">Universidad de Guayaquil</p>
+    <button class="btn" onclick="document.getElementById('grad-modal').classList.remove('show')">Cerrar</button>
+  </div>
+</div>
+
+<script>
+const TOTAL_CREDITS = 153;
+
+const SUBJECTS = [
+  // SEMESTRE I
+  {id: 'algo', name: 'Algoritmos y Programación', credits: 4, semester: 1, icon: '💻', field: 'Básico',
+   questions: [
+     {q: '¿Qué es un algoritmo?', options: ['Una secuencia finita de pasos para resolver un problema', 'Un lenguaje de programación', 'Un tipo de hardware', 'Un sistema operativo'], correct: 0},
+     {q: '¿Cuál estructura de control permite repetir un bloque de código?', options: ['If-else', 'Bucle (for/while)', 'Switch', 'Declaración de variables'], correct: 1},
+     {q: 'En programación, ¿qué significa "variable"?', options: ['Un valor que no cambia', 'Un espacio en memoria que almacena un valor', 'Una función', 'Un comentario'], correct: 1}
+   ]},
+  {id: 'algebra', name: 'Álgebra Lineal', credits: 3, semester: 1, icon: '📐', field: 'Básico',
+   questions: [
+     {q: '¿Qué es un vector?', options: ['Una matriz cuadrada', 'Un arreglo ordenado de números', 'Un escalar', 'Una función'], correct: 1},
+     {q: 'El producto escalar de dos vectores es:', options: ['Otro vector', 'Un número (escalar)', 'Una matriz', 'Indefinido'], correct: 1},
+     {q: 'Una matriz identidad tiene:', options: ['Todos ceros', 'Unos en la diagonal principal y ceros en el resto', 'Todos unos', 'Solo la diagonal'], correct: 1}
+   ]},
+  {id: 'intro', name: 'Introducción a la Ingeniería en Energías', credits: 3, semester: 1, icon: '⚡', field: 'Profesional',
+   questions: [
+     {q: '¿Cuál es una fuente de energía renovable?', options: ['Carbón', 'Petróleo', 'Energía solar', 'Gas natural'], correct: 2},
+     {q: 'La transición energética busca principalmente:', options: ['Aumentar el uso de combustibles fósiles', 'Reducir emisiones y usar fuentes limpias', 'Eliminar la electricidad', 'Aumentar el consumo'], correct: 1},
+     {q: '¿Qué estudia la ingeniería en energía?', options: ['Solo programación', 'Generación, conversión, transporte y uso eficiente de energía', 'Medicina', 'Derecho'], correct: 1}
+   ]},
+  {id: 'quimica', name: 'Química General', credits: 3, semester: 1, icon: '🧪', field: 'Básico',
+   questions: [
+     {q: 'El número atómico indica:', options: ['Número de neutrones', 'Número de protones', 'Número de electrones solamente', 'Masa atómica'], correct: 1},
+     {q: 'Una reacción de combustión libera:', options: ['Solo agua', 'Energía (calor y luz)', 'Solo CO2 sin energía', 'Nada'], correct: 1},
+     {q: 'El pH mide:', options: ['Temperatura', 'Acidez o basicidad de una solución', 'Presión', 'Densidad'], correct: 1}
+   ]},
+  {id: 'catedra', name: 'Cátedra Uniguaya', credits: 2, semester: 1, icon: '🏛️', field: 'Socio',
+   questions: [
+     {q: 'La Universidad de Guayaquil es una institución:', options: ['Privada', 'Pública', 'Internacional exclusiva', 'Militar'], correct: 1},
+     {q: 'La misión de una universidad pública incluye:', options: ['Solo formar elites', 'Formar profesionales y contribuir al desarrollo social', 'Excluir a la mayoría', 'Enfocarse solo en lucro'], correct: 1},
+     {q: '¿Qué valor es importante en la educación universitaria?', options: ['Individualismo extremo', 'Ética, responsabilidad y servicio a la comunidad', 'Competencia desleal', 'Ignorar la historia'], correct: 1}
+   ]},
+  {id: 'ingles1', name: 'Inglés I', credits: 2, semester: 1, icon: '🇬🇧', field: 'Socio',
+   questions: [
+     {q: 'What is the English word for "energía"?', options: ['Power', 'Energy', 'Force', 'Light'], correct: 1},
+     {q: 'Choose the correct sentence:', options: ['I has energy', 'I have energy', 'I having energy', 'I haves energy'], correct: 1},
+     {q: '"Renewable energy" means:', options: ['Energía que se agota', 'Energía que se renueva naturalmente', 'Energía nuclear', 'Energía de carbón'], correct: 1}
+   ]},
+
+  // SEMESTRE II
+  {id: 'calc-dif', name: 'Cálculo Diferencial', credits: 3, semester: 2, icon: '📈', field: 'Básico',
+   questions: [
+     {q: 'La derivada de una función representa:', options: ['El área bajo la curva', 'La tasa de cambio instantánea', 'El valor promedio', 'La integral'], correct: 1},
+     {q: 'La derivada de f(x) = x² es:', options: ['2x', 'x', 'x³/3', '2'], correct: 0},
+     {q: '¿Qué regla se usa para derivar un producto?', options: ['Regla de la cadena', 'Regla del producto', 'Regla del cociente', 'Regla de L\'Hôpital'], correct: 1}
+   ]},
+  {id: 'fis-mec', name: 'Física Mecánica', credits: 3, semester: 2, icon: '⚙️', field: 'Básico',
+   questions: [
+     {q: 'La segunda ley de Newton es:', options: ['F = m·a', 'E = mc²', 'V = IR', 'P = VI'], correct: 0},
+     {q: 'La energía cinética es:', options: ['mgh', '(1/2)mv²', 'Fd', 'qV'], correct: 1},
+     {q: 'La unidad de fuerza en el SI es:', options: ['Joule', 'Watt', 'Newton', 'Pascal'], correct: 2}
+   ]},
+  {id: 'princ-conv', name: 'Principios de Conversión y Uso de la Energía', credits: 3, semester: 2, icon: '🔄', field: 'Profesional',
+   questions: [
+     {q: 'La conversión de energía siempre implica:', options: ['Creación de energía', 'Pérdidas (eficiencia < 100%)', 'Destrucción total', 'Aumento de energía'], correct: 1},
+     {q: 'Un ejemplo de conversión es:', options: ['Solar a eléctrica (fotovoltaica)', 'Solo almacenamiento', 'Nada cambia', 'Solo transporte'], correct: 0},
+     {q: 'La eficiencia energética se define como:', options: ['Energía útil / energía total de entrada', 'Energía total / útil', 'Solo potencia', 'Solo costo'], correct: 0}
+   ]},
+  {id: 'bio-energia', name: 'Biología y Energía', credits: 3, semester: 2, icon: '🌿', field: 'Profesional',
+   questions: [
+     {q: 'La fotosíntesis convierte:', options: ['Energía química en luz', 'Luz solar en energía química', 'Electricidad en biomasa', 'Calor en luz'], correct: 1},
+     {q: 'Los biocombustibles provienen de:', options: ['Solo petróleo', 'Materia orgánica (biomasa)', 'Minerales', 'Aire'], correct: 1},
+     {q: 'La bioenergía es:', options: ['Energía de origen biológico', 'Solo nuclear', 'Solo eólica', 'Solo solar directa'], correct: 0}
+   ]},
+  {id: 'ingles2', name: 'Inglés II', credits: 2, semester: 2, icon: '🇬🇧', field: 'Socio',
+   questions: [
+     {q: 'Translate: "Energía renovable"', options: ['Renewable energy', 'Non-renewable energy', 'Nuclear energy', 'Fossil energy'], correct: 0},
+     {q: 'The past of "generate" is:', options: ['Generate', 'Generated', 'Generating', 'Generates'], correct: 1},
+     {q: '"Efficiency" means:', options: ['Pérdida', 'Eficiencia', 'Costo', 'Tamaño'], correct: 1}
+   ]},
+  {id: 'est-desc', name: 'Estadística Descriptiva', credits: 3, semester: 2, icon: '📊', field: 'Investigativo',
+   questions: [
+     {q: 'La media es:', options: ['El valor más frecuente', 'El promedio aritmético', 'El valor central en datos ordenados', 'La diferencia entre max y min'], correct: 1},
+     {q: 'La desviación estándar mide:', options: ['El centro', 'La dispersión de los datos', 'Solo el máximo', 'La moda'], correct: 1},
+     {q: 'Un histograma muestra:', options: ['Relaciones causales', 'La distribución de frecuencias', 'Solo promedios', 'Correlaciones exactas'], correct: 1}
+   ]},
+
+  // SEMESTRE III
+  {id: 'calc-int', name: 'Cálculo Integral', credits: 3, semester: 3, icon: '∫', field: 'Básico',
+   questions: [
+     {q: 'La integral definida representa:', options: ['La pendiente', 'El área bajo la curva', 'La derivada', 'El límite'], correct: 1},
+     {q: 'La integral de x dx es:', options: ['x²', 'x²/2 + C', '2x', '1'], correct: 1},
+     {q: 'El Teorema Fundamental del Cálculo relaciona:', options: ['Derivadas e integrales', 'Solo matrices', 'Solo estadísticas', 'Solo vectores'], correct: 0}
+   ]},
+  {id: 'fis-elec', name: 'Física Eléctrica', credits: 3, semester: 3, icon: '🔌', field: 'Básico',
+   questions: [
+     {q: 'La ley de Ohm es:', options: ['V = IR', 'F = ma', 'E = mc²', 'P = mgh'], correct: 0},
+     {q: 'La unidad de corriente eléctrica es:', options: ['Voltio', 'Amperio', 'Ohmio', 'Watt'], correct: 1},
+     {q: 'En un circuito en serie, la corriente es:', options: ['Diferente en cada componente', 'La misma en todos', 'Cero', 'Infinita'], correct: 1}
+   ]},
+  {id: 'sist-amb', name: 'Sistemas Ambientales y Energías Renovables', credits: 3, semester: 3, icon: '🌍', field: 'Profesional',
+   questions: [
+     {q: 'Una ventaja de las energías renovables es:', options: ['Alta emisión de CO2', 'Bajas emisiones durante operación', 'Agotamiento rápido', 'Alta dependencia de importaciones'], correct: 1},
+     {q: 'El impacto ambiental de la energía hidroeléctrica puede incluir:', options: ['Solo beneficios', 'Alteración de ecosistemas acuáticos', 'Cero impacto', 'Aumento de fósiles'], correct: 1},
+     {q: 'Sostenibilidad energética implica:', options: ['Usar solo fósiles', 'Equilibrio entre necesidades actuales y futuras', 'Ignorar el medio ambiente', 'Solo costo mínimo'], correct: 1}
+   ]},
+  {id: 'gen-trans', name: 'Generación, Transporte, Distribución y Demanda de Energía Eléctrica', credits: 3, semester: 3, icon: '🏭', field: 'Profesional',
+   questions: [
+     {q: 'La generación eléctrica puede ser por:', options: ['Solo solar', 'Hidroeléctrica, térmica, eólica, solar, etc.', 'Solo carbón', 'Solo manual'], correct: 1},
+     {q: 'Las líneas de transmisión operan generalmente a:', options: ['Baja tensión', 'Alta y extra-alta tensión', 'Solo 12V', 'Corriente continua siempre'], correct: 1},
+     {q: 'La demanda eléctrica varía según:', options: ['Hora del día, estación y actividad económica', 'Solo el clima', 'Nada', 'Solo la generación'], correct: 0}
+   ]},
+  {id: 'circuitos', name: 'Circuitos Eléctricos y Electrónicos para Energía', credits: 3, semester: 3, icon: '🔋', field: 'Profesional',
+   questions: [
+     {q: 'Un diodo permite el paso de corriente:', options: ['En ambas direcciones', 'En una sola dirección', 'Nunca', 'Solo AC'], correct: 1},
+     {q: 'En electrónica de potencia se usan dispositivos como:', options: ['Solo resistencias', 'IGBT, MOSFET, tiristores', 'Solo condensadores', 'Solo inductores'], correct: 1},
+     {q: 'La ley de Kirchhoff de voltajes dice que:', options: ['La suma de voltajes en un lazo es cero', 'La corriente es constante', 'La potencia es infinita', 'Nada'], correct: 0}
+   ]},
+  {id: 'ingles3', name: 'Inglés III', credits: 2, semester: 3, icon: '🇬🇧', field: 'Socio',
+   questions: [
+     {q: '"Solar panel" means:', options: ['Panel solar', 'Turbina eólica', 'Batería', 'Generador'], correct: 0},
+     {q: 'Choose the correct form: "The energy ___ generated by wind."', options: ['is', 'are', 'be', 'were'], correct: 0},
+     {q: '"Grid" in energy context means:', options: ['Red eléctrica', 'Panel', 'Turbina', 'Combustible'], correct: 0}
+   ]},
+
+  // SEMESTRE IV
+  {id: 'calc-multi', name: 'Cálculo Multivariado', credits: 3, semester: 4, icon: '📊', field: 'Básico',
+   questions: [
+     {q: 'Una función de varias variables depende de:', options: ['Una sola variable', 'Dos o más variables independientes', 'Solo constantes', 'Ninguna'], correct: 1},
+     {q: 'El gradiente de una función apunta hacia:', options: ['La dirección de máximo decrecimiento', 'La dirección de máximo crecimiento', 'Siempre cero', 'Indefinido'], correct: 1},
+     {q: 'Las derivadas parciales se calculan:', options: ['Derivando respecto a todas las variables a la vez', 'Derivando respecto a una variable manteniendo las otras constantes', 'Solo integrando', 'Nunca'], correct: 1}
+   ]},
+  {id: 'fis-em', name: 'Física Electromagnética', credits: 3, semester: 4, icon: '🧲', field: 'Básico',
+   questions: [
+     {q: 'La ley de Faraday relaciona:', options: ['Corriente y voltaje', 'Campo magnético variable y fuerza electromotriz inducida', 'Solo gravedad', 'Solo calor'], correct: 1},
+     {q: 'Las ecuaciones de Maxwell describen:', options: ['Solo mecánica', 'El electromagnetismo', 'Solo termodinámica', 'Solo fluidos'], correct: 1},
+     {q: 'Un transformador funciona por:', options: ['Inducción electromagnética', 'Solo resistencia', 'Solo capacitancia', 'Solo mecánica'], correct: 0}
+   ]},
+  {id: 'energia-gest', name: 'Energía y Gestión de Energías Renovables', credits: 3, semester: 4, icon: '🌱', field: 'Profesional',
+   questions: [
+     {q: 'La gestión de energías renovables incluye:', options: ['Solo instalación', 'Planificación, operación, mantenimiento y optimización', 'Solo venta', 'Solo investigación'], correct: 1},
+     {q: 'La intermitencia es un desafío de:', options: ['Energía nuclear', 'Solar y eólica', 'Hidroeléctrica base', 'Carbón'], correct: 1},
+     {q: 'El almacenamiento de energía ayuda a:', options: ['Aumentar intermitencia', 'Equilibrar oferta y demanda', 'Eliminar renovables', 'Solo aumentar costos'], correct: 1}
+   ]},
+  {id: 'gest-ind', name: 'Gestión de la Industria Energética', credits: 3, semester: 4, icon: '🏢', field: 'Profesional',
+   questions: [
+     {q: 'La gestión industrial energética involucra:', options: ['Solo técnica', 'Aspectos técnicos, económicos, regulatorios y ambientales', 'Solo marketing', 'Solo producción'], correct: 1},
+     {q: 'Un KPI importante es:', options: ['Solo el color', 'Eficiencia, disponibilidad, costos', 'Solo el nombre', 'Nada'], correct: 1},
+     {q: 'La regulación energética busca:', options: ['Monopolios sin control', 'Mercados justos, seguridad de suministro y sostenibilidad', 'Eliminar competencia', 'Solo beneficios privados'], correct: 1}
+   ]},
+  {id: 'elec-pot', name: 'Electrónica de Potencia y Sistema de Regulación Automática', credits: 3, semester: 4, icon: '⚙️', field: 'Profesional',
+   questions: [
+     {q: 'La electrónica de potencia se usa para:', options: ['Solo señales pequeñas', 'Convertir y controlar altas potencias eléctricas', 'Solo iluminación', 'Solo comunicación'], correct: 1},
+     {q: 'Un inversor convierte:', options: ['AC a DC', 'DC a AC', 'Solo voltaje', 'Nada'], correct: 1},
+     {q: 'La regulación automática mantiene:', options: ['Variables en valores deseados (voltaje, frecuencia)', 'Todo variable', 'Solo apagado', 'Nada'], correct: 0}
+   ]},
+  {id: 'ingles4', name: 'Inglés IV', credits: 2, semester: 4, icon: '🇬🇧', field: 'Socio',
+   questions: [
+     {q: '"Wind turbine" is:', options: ['Turbina eólica', 'Panel solar', 'Batería', 'Transformador'], correct: 0},
+     {q: 'The comparative of "efficient" is:', options: ['More efficient', 'Efficients', 'Efficienter', 'Most efficient only'], correct: 0},
+     {q: '"Sustainable" means:', options: ['Sostenible', 'Agotable', 'Caro', 'Antiguo'], correct: 0}
+   ]},
+
+  // SEMESTRE V
+  {id: 'ec-dif', name: 'Ecuaciones Diferenciales', credits: 3, semester: 5, icon: '∑', field: 'Básico',
+   questions: [
+     {q: 'Una ecuación diferencial ordinaria involucra:', options: ['Derivadas de una función de una variable', 'Solo integrales', 'Solo matrices', 'Solo estadísticas'], correct: 0},
+     {q: 'La solución de dy/dx = y es:', options: ['y = Ce^x', 'y = x', 'y = 1/x', 'y = e'], correct: 0},
+     {q: 'Las EDO se usan en modelado de:', options: ['Solo geometría', 'Sistemas dinámicos (circuitos, poblaciones, etc.)', 'Solo contabilidad', 'Nada'], correct: 1}
+   ]},
+  {id: 'fis-term', name: 'Física Térmica y Ondulatoria', credits: 3, semester: 5, icon: '🔥', field: 'Básico',
+   questions: [
+     {q: 'La primera ley de la termodinámica es:', options: ['Conservación de la energía', 'Aumento de entropía', 'Solo calor', 'Solo trabajo'], correct: 0},
+     {q: 'Las ondas sonoras son:', options: ['Electromagnéticas', 'Mecánicas longitudinales', 'Solo transversales', 'De luz'], correct: 1},
+     {q: 'La temperatura absoluta se mide en:', options: ['Celsius', 'Kelvin', 'Fahrenheit', 'Rankine solo'], correct: 1}
+   ]},
+  {id: 'bioenergia', name: 'Bioenergía y Producción Sostenible de Biocombustibles', credits: 3, semester: 5, icon: '🌽', field: 'Profesional',
+   questions: [
+     {q: 'El biodiésel se produce a partir de:', options: ['Solo petróleo', 'Aceites vegetales o grasas animales', 'Solo carbón', 'Solo agua'], correct: 1},
+     {q: 'La producción sostenible de biocombustibles evita:', options: ['Competencia con alimentos y deforestación', 'Solo costos', 'Solo tecnología', 'Nada'], correct: 0},
+     {q: 'El bioetanol proviene principalmente de:', options: ['Caña de azúcar o maíz', 'Solo gas', 'Solo nuclear', 'Solo solar'], correct: 0}
+   ]},
+  {id: 'mercado', name: 'Mercado Energético', credits: 2, semester: 5, icon: '💰', field: 'Profesional',
+   questions: [
+     {q: 'El mercado eléctrico puede ser:', options: ['Solo regulado', 'Regulado o liberalizado', 'Solo monopolio', 'Inexistente'], correct: 1},
+     {q: 'El precio de la energía depende de:', options: ['Oferta, demanda, costos de generación y regulación', 'Solo el color', 'Nada', 'Solo el clima'], correct: 0},
+     {q: 'Las energías renovables han reducido:', options: ['Costos a largo plazo en muchos mercados', 'Solo aumentados', 'Nada', 'Solo nuclear'], correct: 0}
+   ]},
+  {id: 'eficiencia', name: 'Eficiencia Energética', credits: 2, semester: 5, icon: '💡', field: 'Profesional',
+   questions: [
+     {q: 'Eficiencia energética significa:', options: ['Usar más energía', 'Obtener el mismo servicio con menos energía', 'Solo apagar todo', 'Aumentar pérdidas'], correct: 1},
+     {q: 'Medidas de eficiencia incluyen:', options: ['Iluminación LED, aislamiento, motores eficientes', 'Solo más consumo', 'Nada', 'Solo fósiles'], correct: 0},
+     {q: 'La eficiencia reduce:', options: ['Costos y emisiones', 'Solo aumenta', 'Nada', 'Solo beneficios'], correct: 0}
+   ]},
+  {id: 'etica', name: 'Desarrollo de la ética y valores', credits: 2, semester: 5, icon: '⚖️', field: 'Socio',
+   questions: [
+     {q: 'La ética profesional en ingeniería implica:', options: ['Priorizar solo el lucro', 'Responsabilidad social, seguridad y sostenibilidad', 'Ignorar impactos', 'Solo técnica'], correct: 1},
+     {q: 'Un valor importante es:', options: ['Honestidad e integridad', 'Engaño', 'Individualismo extremo', 'Corrupción'], correct: 0},
+     {q: 'El ingeniero debe considerar:', options: ['Solo el proyecto técnico', 'Impactos ambientales y sociales', 'Nada más', 'Solo costos'], correct: 1}
+   ]},
+  {id: 'ingles5', name: 'Inglés V', credits: 2, semester: 5, icon: '🇬🇧', field: 'Socio',
+   questions: [
+     {q: '"Hydrogen" is:', options: ['Hidrógeno', 'Oxígeno', 'Carbono', 'Nitrógeno'], correct: 0},
+     {q: 'A synonym for "sustainable" is:', options: ['Exhaustible', 'Renewable / long-lasting', 'Polluting', 'Temporary'], correct: 1},
+     {q: '"Smart grid" refers to:', options: ['Red eléctrica inteligente', 'Panel solar', 'Turbina', 'Batería simple'], correct: 0}
+   ]},
+
+  // SEMESTRE VI
+  {id: 'termo', name: 'Termodinámica', credits: 3, semester: 6, icon: '🌡️', field: 'Básico',
+   questions: [
+     {q: 'La segunda ley de la termodinámica establece que:', options: ['La entropía del universo aumenta', 'La energía se crea', 'Todo es reversible', 'Nada'], correct: 0},
+     {q: 'Un ciclo de Carnot es:', options: ['El más eficiente entre dos temperaturas', 'El menos eficiente', 'Solo real', 'Imposible'], correct: 0},
+     {q: 'La entalpía se usa en:', options: ['Procesos a presión constante', 'Solo vacío', 'Solo mecánica', 'Nada'], correct: 0}
+   ]},
+  {id: 'hidro', name: 'Energía Hidráulica y Minihidráulica', credits: 3, semester: 6, icon: '💧', field: 'Profesional',
+   questions: [
+     {q: 'La energía hidráulica aprovecha:', options: ['El viento', 'La energía potencial del agua', 'El sol directo', 'El calor de la tierra'], correct: 1},
+     {q: 'Una minihidráulica es:', options: ['Central pequeña de baja potencia', 'Solo grandes represas', 'Solo bombeo', 'Nada'], correct: 0},
+     {q: 'Ventaja de la hidroeléctrica:', options: ['Alta intermitencia', 'Generación firme y almacenamiento', 'Cero impacto', 'Solo costosa'], correct: 1}
+   ]},
+  {id: 'gest-redes', name: 'Gestión de Redes Eléctricas, Transporte y Distribución', credits: 2, semester: 6, icon: '🔗', field: 'Profesional',
+   questions: [
+     {q: 'La gestión de redes incluye:', options: ['Solo generación', 'Operación, mantenimiento, expansión y calidad', 'Solo consumo', 'Nada'], correct: 1},
+     {q: 'Las pérdidas en transmisión se reducen con:', options: ['Alta tensión', 'Baja tensión siempre', 'Solo cables cortos', 'Nada'], correct: 0},
+     {q: 'Smart grids permiten:', options: ['Mejor monitoreo y control bidireccional', 'Solo flujo unidireccional', 'Nada nuevo', 'Solo apagones'], correct: 0}
+   ]},
+  {id: 'eolica', name: 'Energía Eólica', credits: 3, semester: 6, icon: '💨', field: 'Profesional',
+   questions: [
+     {q: 'La energía eólica convierte:', options: ['Energía cinética del viento en eléctrica', 'Solo calor', 'Solo luz', 'Nada'], correct: 0},
+     {q: 'El factor de capacidad de un parque eólico es típicamente:', options: ['100%', '30-50% aproximadamente', '0%', '200%'], correct: 1},
+     {q: 'Las turbinas modernas usan:', options: ['Solo eje vertical siempre', 'Principalmente eje horizontal', 'Solo pequeñas', 'Nada'], correct: 1}
+   ]},
+  {id: 'mec-fluid', name: 'Aplicación de Mecánica de Fluidos', credits: 3, semester: 6, icon: '🌊', field: 'Profesional',
+   questions: [
+     {q: 'La ecuación de Bernoulli relaciona:', options: ['Presión, velocidad y altura', 'Solo temperatura', 'Solo corriente', 'Nada'], correct: 0},
+     {q: 'En turbinas hidráulicas se aplica:', options: ['Mecánica de fluidos', 'Solo electricidad', 'Solo química', 'Nada'], correct: 0},
+     {q: 'La viscosidad mide:', options: ['Resistencia al flujo', 'Densidad', 'Temperatura', 'Presión'], correct: 0}
+   ]},
+  {id: 'prob-est', name: 'Probabilidad y Estadística Inferencial', credits: 3, semester: 6, icon: '🎲', field: 'Investigativo',
+   questions: [
+     {q: 'La probabilidad de un evento seguro es:', options: ['0', '1', '0.5', 'Infinita'], correct: 1},
+     {q: 'La inferencia estadística permite:', options: ['Concluir sobre una población a partir de una muestra', 'Solo describir', 'Nada', 'Solo calcular medias'], correct: 0},
+     {q: 'Un intervalo de confianza indica:', options: ['Rango donde probablemente está el parámetro', 'Valor exacto siempre', 'Nada', 'Solo error'], correct: 0}
+   ]},
+
+  // SEMESTRE VII
+  {id: 'met-num', name: 'Métodos Numéricos', credits: 3, semester: 7, icon: '🔢', field: 'Básico',
+   questions: [
+     {q: 'Los métodos numéricos se usan cuando:', options: ['Hay solución analítica exacta fácil', 'No hay solución analítica o es compleja', 'Solo para sumas simples', 'Nada'], correct: 1},
+     {q: 'El método de Newton-Raphson sirve para:', options: ['Encontrar raíces de ecuaciones', 'Solo integrar', 'Solo derivar', 'Nada'], correct: 0},
+     {q: 'La interpolación permite:', options: ['Estimar valores entre datos conocidos', 'Solo extrapolar siempre', 'Nada', 'Solo promedios'], correct: 0}
+   ]},
+  {id: 'com-escrita', name: 'Comunicación Escrita y Lectura Crítica', credits: 3, semester: 7, icon: '📝', field: 'Básico',
+   questions: [
+     {q: 'Una buena comunicación escrita en ingeniería debe ser:', options: ['Clara, precisa y objetiva', 'Ambígua', 'Solo informal', 'Sin datos'], correct: 0},
+     {q: 'La lectura crítica implica:', options: ['Aceptar todo sin cuestionar', 'Analizar, evaluar y cuestionar la información', 'Solo leer rápido', 'Nada'], correct: 1},
+     {q: 'En informes técnicos se prioriza:', options: ['Estructura lógica y evidencia', 'Solo opiniones', 'Nada', 'Solo gráficos sin texto'], correct: 0}
+   ]},
+  {id: 'geo-mare', name: 'Energía Geotérmica y Mareomotriz', credits: 3, semester: 7, icon: '🌋', field: 'Profesional',
+   questions: [
+     {q: 'La energía geotérmica aprovecha:', options: ['El calor interno de la Tierra', 'El viento', 'El sol', 'Las mareas solo'], correct: 0},
+     {q: 'La energía mareomotriz usa:', options: ['Las mareas y corrientes oceánicas', 'Solo olas', 'Solo calor', 'Nada'], correct: 0},
+     {q: 'Una ventaja de la geotérmica es:', options: ['Alta intermitencia', 'Generación base confiable', 'Solo costosa siempre', 'Cero disponibilidad'], correct: 1}
+   ]},
+  {id: 'smart', name: 'Smart Grids, Redes eléctricas inteligentes', credits: 3, semester: 7, icon: '📡', field: 'Profesional',
+   questions: [
+     {q: 'Una smart grid incorpora:', options: ['Tecnologías de información y comunicación', 'Solo cables antiguos', 'Nada digital', 'Solo generación'], correct: 0},
+     {q: 'Permite:', options: ['Integración de renovables y respuesta a la demanda', 'Solo flujo unidireccional', 'Más apagones', 'Nada'], correct: 0},
+     {q: 'Los medidores inteligentes miden:', options: ['Consumo en tiempo real', 'Solo total mensual', 'Nada', 'Solo voltaje'], correct: 0}
+   ]},
+  {id: 'proc-trans', name: 'Procesos de Transformación Energética', credits: 3, semester: 7, icon: '⚗️', field: 'Profesional',
+   questions: [
+     {q: 'La transformación energética incluye:', options: ['Conversión de una forma de energía a otra', 'Solo almacenamiento', 'Nada', 'Solo transporte'], correct: 0},
+     {q: 'Ejemplos son:', options: ['Combustión, electrólisis, fotovoltaica', 'Solo mecánica', 'Nada', 'Solo química pura'], correct: 0},
+     {q: 'La eficiencia de transformación es clave para:', options: ['Reducir pérdidas', 'Aumentar pérdidas', 'Nada', 'Solo costos'], correct: 0}
+   ]},
+  {id: 'electiva1', name: 'Electiva I', credits: 2, semester: 7, icon: '📚', field: 'Profesional',
+   questions: [
+     {q: 'Una electiva en energía podría ser:', options: ['Almacenamiento de energía', 'Solo historia', 'Solo arte', 'Nada relacionado'], correct: 0},
+     {q: 'El almacenamiento en baterías es importante para:', options: ['Integrar renovables intermitentes', 'Solo aumentar costos', 'Nada', 'Solo fósiles'], correct: 0},
+     {q: 'Las tecnologías de almacenamiento incluyen:', options: ['Baterías, bombeo, hidrógeno, térmica', 'Solo una', 'Nada', 'Solo mecánica'], correct: 0}
+   ]},
+
+  // SEMESTRE VIII
+  {id: 'mat-avanz', name: 'Matemáticas Avanzadas', credits: 3, semester: 8, icon: '∞', field: 'Básico',
+   questions: [
+     {q: 'Las transformadas de Fourier se usan en:', options: ['Análisis de señales y sistemas', 'Solo geometría básica', 'Nada', 'Solo estadística'], correct: 0},
+     {q: 'Las ecuaciones en derivadas parciales modelan:', options: ['Fenómenos en varias variables (calor, ondas)', 'Solo funciones simples', 'Nada', 'Solo álgebra'], correct: 0},
+     {q: 'El análisis complejo es útil en:', options: ['Ingeniería eléctrica y control', 'Solo mecánica básica', 'Nada', 'Solo química'], correct: 0}
+   ]},
+  {id: 'modelado', name: 'Modelado y Simulación de Sistemas', credits: 3, semester: 8, icon: '🖥️', field: 'Básico',
+   questions: [
+     {q: 'El modelado de sistemas permite:', options: ['Representar y predecir el comportamiento de sistemas reales', 'Solo dibujar', 'Nada', 'Solo medir'], correct: 0},
+     {q: 'La simulación computacional se usa para:', options: ['Probar escenarios sin construir el sistema real', 'Solo reemplazar todo', 'Nada', 'Solo cálculos manuales'], correct: 0},
+     {q: 'Herramientas comunes incluyen:', options: ['MATLAB, Simulink, Python', 'Solo papel', 'Nada', 'Solo Excel básico'], correct: 0}
+   ]},
+  {id: 'solar', name: 'Energía Solar Fotovoltaica y Térmica', credits: 3, semester: 8, icon: '☀️', field: 'Profesional',
+   questions: [
+     {q: 'La energía fotovoltaica convierte:', options: ['Luz solar directamente en electricidad', 'Calor en electricidad', 'Solo calor', 'Nada'], correct: 0},
+     {q: 'La energía solar térmica se usa para:', options: ['Calentar agua o generar vapor', 'Solo electricidad directa', 'Nada', 'Solo viento'], correct: 0},
+     {q: 'El efecto fotovoltaico ocurre en:', options: ['Semiconductores como silicio', 'Solo metales', 'Solo líquidos', 'Nada'], correct: 0}
+   ]},
+  {id: 'electiva2', name: 'Electiva II', credits: 2, semester: 8, icon: '📚', field: 'Profesional',
+   questions: [
+     {q: 'Una electiva podría enfocarse en:', options: ['Vehículos eléctricos o hidrógeno', 'Solo historia antigua', 'Nada', 'Solo literatura'], correct: 0},
+     {q: 'Los vehículos eléctricos reducen:', options: ['Emisiones locales', 'Solo aumentan', 'Nada', 'Solo costos siempre'], correct: 0},
+     {q: 'La electromovilidad es clave en:', options: ['La transición energética del transporte', 'Solo fósiles', 'Nada', 'Solo aviones'], correct: 0}
+   ]},
+  {id: 'fund-inv', name: 'Fundamentos de Investigación', credits: 3, semester: 8, icon: '🔍', field: 'Investigativo',
+   questions: [
+     {q: 'El método científico incluye:', options: ['Observación, hipótesis, experimentación, conclusión', 'Solo opiniones', 'Nada', 'Solo lectura'], correct: 0},
+     {q: 'Una hipótesis debe ser:', options: ['Falsable y basada en conocimiento previo', 'Siempre verdadera', 'Nada', 'Solo creencia'], correct: 0},
+     {q: 'La revisión bibliográfica es:', options: ['Esencial antes de investigar', 'Innecesaria', 'Solo al final', 'Nada'], correct: 0}
+   ]},
+  {id: 'instal', name: 'Instalaciones Eléctricas Residenciales e Industriales', credits: 4, semester: 8, icon: '🏠', field: 'Investigativo',
+   questions: [
+     {q: 'En instalaciones residenciales se considera:', options: ['Seguridad, normativa, carga y eficiencia', 'Solo estética', 'Nada', 'Solo costo mínimo'], correct: 0},
+     {q: 'La puesta a tierra es importante para:', options: ['Seguridad contra descargas', 'Solo decoración', 'Nada', 'Solo eficiencia'], correct: 0},
+     {q: 'En industriales se manejan:', options: ['Mayores potencias y protecciones especiales', 'Solo residencial', 'Nada', 'Solo baja tensión'], correct: 0}
+   ]},
+
+  // SEMESTRE IX
+  {id: 'emprend', name: 'Emprendimiento e Innovación en Energías Sostenibles', credits: 3, semester: 9, icon: '🚀', field: 'Básico',
+   questions: [
+     {q: 'El emprendimiento en energía sostenible busca:', options: ['Crear soluciones innovadoras y negocios verdes', 'Solo copiar lo existente', 'Nada', 'Solo fósiles'], correct: 0},
+     {q: 'La innovación incluye:', options: ['Nuevas tecnologías, modelos de negocio y procesos', 'Solo lo tradicional', 'Nada', 'Solo marketing'], correct: 0},
+     {q: 'Un startup de energía puede enfocarse en:', options: ['Almacenamiento, eficiencia, renovables', 'Solo petróleo', 'Nada', 'Solo carbón'], correct: 0}
+   ]},
+  {id: 'hidrogeno', name: 'Hidrógeno y su Rol en la Transición Energética', credits: 3, semester: 9, icon: 'H₂', field: 'Profesional',
+   questions: [
+     {q: 'El hidrógeno verde se produce por:', options: ['Electrólisis con energía renovable', 'Solo reformado de gas natural', 'Solo carbón', 'Nada'], correct: 0},
+     {q: 'El hidrógeno puede usarse en:', options: ['Pilas de combustible, industria, almacenamiento', 'Solo combustión simple', 'Nada', 'Solo transporte aéreo'], correct: 0},
+     {q: 'Una ventaja del hidrógeno es:', options: ['Almacenamiento de energía a largo plazo', 'Solo corta duración', 'Nada', 'Solo costoso siempre'], correct: 0}
+   ]},
+  {id: 'electiva3', name: 'Electiva III', credits: 2, semester: 9, icon: '📚', field: 'Profesional',
+   questions: [
+     {q: 'Una electiva avanzada podría ser:', options: ['Políticas energéticas o economía circular', 'Solo básico', 'Nada', 'Solo historia'], correct: 0},
+     {q: 'La economía circular en energía busca:', options: ['Minimizar residuos y maximizar uso de recursos', 'Solo lineal', 'Nada', 'Solo desecho'], correct: 0},
+     {q: 'Las políticas energéticas influyen en:', options: ['Adopción de tecnologías limpias', 'Solo fósiles', 'Nada', 'Solo costos'], correct: 0}
+   ]},
+  {id: 'met-inv', name: 'Métodos de Investigación en Energía y Sostenibilidad', credits: 2, semester: 9, icon: '🔬', field: 'Investigativo',
+   questions: [
+     {q: 'La investigación en sostenibilidad energética incluye:', options: ['Análisis de ciclo de vida, impactos ambientales', 'Solo técnica', 'Nada', 'Solo costos'], correct: 0},
+     {q: 'Métodos cualitativos y cuantitativos se usan para:', options: ['Entender problemas complejos', 'Solo números', 'Nada', 'Solo opiniones'], correct: 0},
+     {q: 'La interdisciplinariedad es clave porque:', options: ['La energía involucra aspectos técnicos, sociales y ambientales', 'Solo una disciplina', 'Nada', 'Solo ingeniería'], correct: 0}
+   ]},
+  {id: 'gerencia', name: 'Gerencia de Proyectos de Investigación y Desarrollo', credits: 2, semester: 9, icon: '📋', field: 'Investigativo',
+   questions: [
+     {q: 'La gerencia de proyectos I+D incluye:', options: ['Planificación, ejecución, control y cierre', 'Solo ideas', 'Nada', 'Solo presupuesto'], correct: 0},
+     {q: 'El ciclo de vida de un proyecto tiene fases como:', options: ['Inicio, planificación, ejecución, monitoreo, cierre', 'Solo una', 'Nada', 'Solo final'], correct: 0},
+     {q: 'Riesgos en proyectos energéticos pueden ser:', options: ['Técnicos, regulatorios, financieros', 'Solo técnicos', 'Nada', 'Solo climáticos'], correct: 0}
+   ]},
+  {id: 'proyecto', name: 'Proyecto Integrador y Trabajo de Grado', credits: 4, semester: 9, icon: '🎓', field: 'Investigativo',
+   questions: [
+     {q: 'El trabajo de grado debe demostrar:', options: ['Capacidad de investigar y aplicar conocimientos de la carrera', 'Solo copiar', 'Nada', 'Solo teoría'], correct: 0},
+     {q: 'Un proyecto integrador combina:', options: ['Conocimientos de varias materias', 'Solo una', 'Nada', 'Solo básica'], correct: 0},
+     {q: 'La defensa del trabajo incluye:', options: ['Presentación y justificación de resultados', 'Solo entrega', 'Nada', 'Solo escrito'], correct: 0}
+   ]}
+];
+
+let state = {
+  name: '',
+  currentSemester: 1,
+  passed: {}, // id -> grade
+  viewingSemester: 1
+};
+
+function loadState() {
+  const saved = localStorage.getItem('energiaGameProgress');
+  if (saved) {
+    state = JSON.parse(saved);
+  }
+}
+
+function saveState() {
+  localStorage.setItem('energiaGameProgress', JSON.stringify(state));
+}
+
+function getTotalCredits() {
+  return Object.keys(state.passed).reduce((sum, id) => {
+    const sub = SUBJECTS.find(s => s.id === id);
+    return sum + (sub ? sub.credits : 0);
+  }, 0);
+}
+
+function isSemesterComplete(sem) {
+  const subjects = SUBJECTS.filter(s => s.semester === sem);
+  return subjects.every(s => state.passed[s.id]);
+}
+
+function canAdvance() {
+  return isSemesterComplete(state.currentSemester) && state.currentSemester < 9;
+}
+
+function startGame() {
+  const name = document.getElementById('student-name').value.trim();
+  if (!name) { alert('Ingresa tu nombre'); return; }
+  state.name = name;
+  saveState();
+  document.getElementById('name-modal').classList.remove('show');
+  render();
+}
+
+function render() {
+  const credits = getTotalCredits();
+  const percent = Math.min(100, Math.round((credits / TOTAL_CREDITS) * 100));
+  
+  document.getElementById('student-info').textContent = state.name ? `Estudiante: ${state.name}` : '';
+  document.getElementById('credits-text').textContent = `${credits} / ${TOTAL_CREDITS} créditos`;
+  document.getElementById('progress-fill').style.width = percent + '%';
+  document.getElementById('progress-fill').textContent = percent + '%';
+  document.getElementById('semester-info').textContent = `Semestre actual: ${state.currentSemester} | Viendo: ${state.viewingSemester}`;
+
+  // Semester buttons
+  const nav = document.getElementById('semester-nav');
+  nav.innerHTML = '';
+  for (let i = 1; i <= 9; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'sem-btn' + (i === state.viewingSemester ? ' active' : '');
+    btn.textContent = `Sem ${i}`;
+    btn.onclick = () => { state.viewingSemester = i; render(); };
+    if (i > state.currentSemester) btn.disabled = true;
+    nav.appendChild(btn);
+  }
+
+  // Subjects
+  const grid = document.getElementById('subjects-grid');
+  grid.innerHTML = '';
+  const subjects = SUBJECTS.filter(s => s.semester === state.viewingSemester);
+  subjects.forEach(sub => {
+    const card = document.createElement('div');
+    card.className = 'subject-card' + (state.passed[sub.id] ? ' passed' : '');
+    const grade = state.passed[sub.id];
+    card.innerHTML = `
+      <div class="icon">${sub.icon}</div>
+      <h3>${sub.name}</h3>
+      <div class="meta">${sub.credits} créditos • ${sub.field}</div>
+      ${grade ? `<div class="grade">${grade}</div>` : ''}
+      <button class="btn" ${state.passed[sub.id] || sub.semester > state.currentSemester ? 'disabled' : ''} 
+              onclick="openQuiz('${sub.id}')">
+        ${state.passed[sub.id] ? 'Aprobado' : 'Estudiar'}
+      </button>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Advance button if possible
+  if (canAdvance() && state.viewingSemester === state.currentSemester) {
+    const adv = document.createElement('div');
+    adv.style.gridColumn = '1 / -1';
+    adv.style.textAlign = 'center';
+    adv.style.marginTop = '1rem';
+    adv.innerHTML = `<button class="btn" onclick="advanceSemester()">Avanzar al Semestre ${state.currentSemester + 1}</button>`;
+    grid.appendChild(adv);
+  }
+
+  if (Object.keys(state.passed).length === SUBJECTS.length) {
+    document.getElementById('grad-modal').classList.add('show');
+  }
+}
+
+let currentQuiz = null;
+let currentAnswers = [];
+
+function openQuiz(id) {
+  const sub = SUBJECTS.find(s => s.id === id);
+  if (!sub || state.passed[id]) return;
+  currentQuiz = sub;
+  currentAnswers = new Array(sub.questions.length).fill(null);
+  
+  document.getElementById('quiz-title').textContent = `Estudiar: ${sub.name}`;
+  let html = '';
+  sub.questions.forEach((q, i) => {
+    html += `<div class="question">
+      <p><strong>${i+1}.</strong> ${q.q}</p>
+      <div class="options">`;
+    q.options.forEach((opt, j) => {
+      html += `<label><input type="radio" name="q${i}" value="${j}" onchange="currentAnswers[${i}]=${j}"> ${opt}</label>`;
+    });
+    html += `</div></div>`;
+  });
+  document.getElementById('quiz-content').innerHTML = html;
+  document.getElementById('quiz-modal').classList.add('show');
+}
+
+function submitQuiz() {
+  if (!currentQuiz) return;
+  const unanswered = currentAnswers.some(a => a === null);
+  if (unanswered) { alert('Responde todas las preguntas'); return; }
+  
+  let correct = 0;
+  currentQuiz.questions.forEach((q, i) => {
+    if (currentAnswers[i] === q.correct) correct++;
+  });
+  const percent = Math.round((correct / currentQuiz.questions.length) * 100);
+  const grade = percent >= 90 ? 95 : percent >= 80 ? 85 : percent >= 70 ? 75 : percent >= 60 ? 65 : 50;
+  
+  if (percent >= 70) {
+    state.passed[currentQuiz.id] = grade;
+    saveState();
+    alert(`¡Aprobado! Nota: ${grade}/100 (${percent}% correctas)`);
+    closeQuiz();
+    render();
+  } else {
+    alert(`No aprobado. Obtuviste ${percent}%. Necesitas al menos 70%. ¡Sigue estudiando!`);
+  }
+}
+
+function closeQuiz() {
+  document.getElementById('quiz-modal').classList.remove('show');
+  currentQuiz = null;
+}
+
+function advanceSemester() {
+  if (canAdvance()) {
+    state.currentSemester++;
+    state.viewingSemester = state.currentSemester;
+    saveState();
+    render();
+    alert(`¡Avanzaste al semestre ${state.currentSemester}!`);
+  }
+}
+
+// Init
+loadState();
+if (!state.name) {
+  document.getElementById('name-modal').classList.add('show');
+} else {
+  render();
+}
+</script>
+</body>
+</html>
